@@ -28,6 +28,10 @@ def create_app(config_class='config.Config'):
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     
+    # Import and register the admin blueprint
+    from app.routes.admin import admin_bp
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    
     # Ensure database models are registered and create tables
     with app.app_context():
         # Importing models runs the model initialization file, which registers
