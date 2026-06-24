@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
@@ -31,6 +31,19 @@ def create_app(config_class='config.Config'):
     # Import and register the admin blueprint
     from app.routes.admin import admin_bp
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    
+    from app.routes.company import company_bp
+    app.register_blueprint(company_bp, url_prefix='/api/company')
+
+    from app.routes.student import student_bp
+    app.register_blueprint(student_bp, url_prefix='/api/student')
+    
+    @app.route('/')
+    def index():
+        return jsonify({
+            "status": "online",
+            "message": "Placement Portal backend API is active. Use frontend at http://localhost:5173 or endpoints /api/..."
+        }), 200
     
     # Ensure database models are registered and create tables
     with app.app_context():
