@@ -42,6 +42,17 @@ class PlacementDrive(db.Model):
     # - backref='drive' allows the InterviewSchedule to reference the PlacementDrive as schedule.drive.
     interview_schedule = db.relationship('InterviewSchedule', backref='drive', uselist=False)
     
+    def __init__(self, company_id, job_title, eligibility_cgpa, package_lpa, application_deadline, status='pending', job_description=None, eligible_branches=None):
+        self.company_id = company_id
+        self.job_title = job_title
+        self.eligibility_cgpa = eligibility_cgpa
+        self.package_lpa = package_lpa
+        self.application_deadline = application_deadline
+        self.status = status
+        self.job_description = job_description
+        if eligible_branches is not None:
+            self.eligible_branches = eligible_branches
+
     def set_branches(self, branches_list):
         """Serializes a Python list of branches into a JSON string to store in the database."""
         self.eligible_branches = json.dumps(branches_list)
@@ -54,3 +65,4 @@ class PlacementDrive(db.Model):
 
     def __repr__(self):
         return f'<PlacementDrive {self.job_title}>'
+

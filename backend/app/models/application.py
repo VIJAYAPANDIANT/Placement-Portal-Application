@@ -20,5 +20,12 @@ class Application(db.Model):
     # The status of the application (e.g. applied, shortlisted, selected, rejected). Defaults to 'applied'.
     status = db.Column(db.String(20), default='applied', nullable=False)
 
+    def __init__(self, student_id, drive_id, applied_on=None, status='applied'):
+        self.student_id = student_id
+        self.drive_id = drive_id
+        self.applied_on = applied_on if applied_on is not None else date.today()
+        self.status = status
+
     def __repr__(self):
         return f'<Application id={self.id} student={self.student_id} drive={self.drive_id}>'
+
