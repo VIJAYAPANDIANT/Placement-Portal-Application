@@ -22,5 +22,13 @@ class InterviewSchedule(db.Model):
     # Any extra instructions or notes for the interviewees.
     notes = db.Column(db.Text)
 
+    def __init__(self, drive_id, interview_date, interview_mode, location_or_link=None, notes=None):
+        self.drive_id = drive_id
+        self.interview_date = interview_date
+        self.interview_mode = interview_mode
+        self.location_or_link = location_or_link
+        self.notes = notes
+
     def __repr__(self):
         return f'<InterviewSchedule id={self.id} drive={self.drive_id}>'
+

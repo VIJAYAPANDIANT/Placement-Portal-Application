@@ -61,7 +61,7 @@ def login():
         
     # 6. Generate JWT access token with user details (id, role, email) embedded in the payload claims
     access_token = create_access_token(
-        identity=user.email,
+        identity=str(user.id),
         additional_claims={
             'id': user.id,
             'role': role,
@@ -70,6 +70,7 @@ def login():
     )
     
     return jsonify(access_token=access_token), 200
+
 
 @auth_bp.route('/register/student', methods=['POST'])
 def register_student():

@@ -14,9 +14,12 @@ def role_required(role):
                 # verify_jwt_in_request checks if a valid JWT is present in the request.
                 # It will raise an exception if the token is missing, expired, or invalid.
                 verify_jwt_in_request()
-            except Exception:
+            except Exception as e:
+                # Log the specific error to the console for easier debugging
+                print(f"JWT verification failed: {e}")
                 # If no token is provided or the token is invalid, return a 401 Unauthorized response.
                 return jsonify({'error': 'Missing or invalid token'}), 401
+
             
             # Reads the custom claims (metadata payload) stored inside the JWT token.
             claims = get_jwt()

@@ -12,7 +12,7 @@ from app.utils.decorators import role_required
 company_bp = Blueprint('company_bp', __name__)
 
 def verify_approved_company():
-    company = Company.query.get(get_jwt_identity())
+    company = Company.query.get(int(get_jwt_identity()))
     if not company:
         return jsonify({"error": "Company not found"}), 404
     if company.approval_status != 'approved':
@@ -44,7 +44,7 @@ def create_drive():
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
 
     drive = PlacementDrive(
-        company_id=get_jwt_identity(),
+        company_id=int(get_jwt_identity()),
         job_title=job_title,
         job_description=job_description,
         eligibility_cgpa=float(eligibility_cgpa),
@@ -65,7 +65,7 @@ def create_drive():
 @company_bp.route('/drives', methods=['GET'])
 @role_required('company')
 def get_company_drives():
-    company_id = get_jwt_identity()
+    company_id = int(get_jwt_identity())
     drives = PlacementDrive.query.filter_by(company_id=company_id).all()
     
     result = []
@@ -91,7 +91,7 @@ def get_drive_applicants(drive_id):
     if not drive:
         return jsonify({"error": "Placement drive not found"}), 404
 
-    if drive.company_id != get_jwt_identity():
+    if drive.company_id != int(get_jwt_identity()):
         return jsonify({"error": "Access denied"}), 403
 
     # Join Application with Student to retrieve requested fields
@@ -131,7 +131,7 @@ def update_application_status(application_id):
         return jsonify({"error": "Application not found"}), 404
 
     drive = PlacementDrive.query.get(application.drive_id)
-    if not drive or drive.company_id != get_jwt_identity():
+    if not drive or drive.company_id != int(get_jwt_identity()):
         return jsonify({"error": "Access denied"}), 403
 
     data = request.get_json() or {}
@@ -155,7 +155,7 @@ def schedule_interview(drive_id):
     if not drive:
         return jsonify({"error": "Placement drive not found"}), 404
 
-    if drive.company_id != get_jwt_identity():
+    if drive.company_id != int(get_jwt_identity()):
         return jsonify({"error": "Access denied"}), 403
 
     existing_schedule = InterviewSchedule.query.filter_by(drive_id=drive_id).first()
@@ -195,7 +195,7 @@ def schedule_interview(drive_id):
 @company_bp.route('/dashboard/funnel', methods=['GET'])
 @role_required('company')
 def get_funnel_stats():
-    company_id = get_jwt_identity()
+    company_id = int(get_jwt_identity())
     
     # Query statuses count by grouping applications on drives owned by company_id
     stats = db.session.query(

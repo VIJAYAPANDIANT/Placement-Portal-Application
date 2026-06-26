@@ -40,7 +40,7 @@ def get_student_drives():
 @student_bp.route('/drives/<int:drive_id>/apply', methods=['POST'])
 @role_required('student')
 def apply_to_drive(drive_id):
-    student = Student.query.get(get_jwt_identity())
+    student = Student.query.get(int(get_jwt_identity()))
     if not student:
         return jsonify({"error": "Student not found"}), 404
 
@@ -52,16 +52,25 @@ def apply_to_drive(drive_id):
     
     # CHECK 1: CGPA check
     if student.cgpa < drive.eligibility_cgpa:
-        return jsonify({"error": "CGPA does not meet eligibility requirement"}), 400
+        return jsonify({
+            "error": "CGPA does not meet eligibility requirement",
+            "message": "CGPA does not meet eligibility requirement"
+        }), 400
 
     # CHECK 2: Branch check
     if student.branch not in drive.get_branches():
-        return jsonify({"error": "Your branch is not eligible for this drive"}), 400
+        return jsonify({
+            "error": "Your branch is not eligible for this drive",
+            "message": "Your branch is not eligible for this drive"
+        }), 400
 
     # CHECK 3: Duplicate application check
     existing = Application.query.filter_by(student_id=student.id, drive_id=drive_id).first()
     if existing:
-        return jsonify({"error": "You have already applied to this drive"}), 400
+        return jsonify({
+            "error": "You have already applied to this drive",
+            "message": "You have already applied to this drive"
+        }), 400
 
     # Create application
     application = Application(
@@ -78,7 +87,7 @@ def apply_to_drive(drive_id):
 @student_bp.route('/applications', methods=['GET'])
 @role_required('student')
 def get_student_applications():
-    student_id = get_jwt_identity()
+    student_id = int(get_jwt_identity())
 
     # Join Application with PlacementDrive and Company
     applications_data = db.session.query(
@@ -108,7 +117,7 @@ def get_student_applications():
 @student_bp.route('/interviews', methods=['GET'])
 @role_required('student')
 def get_student_interviews():
-    student_id = get_jwt_identity()
+    student_id = int(get_jwt_identity())
 
     # Query drives where the student has an Application with status in ('shortlisted', 'selected')
     # and has a linked InterviewSchedule details
@@ -141,7 +150,7 @@ def get_student_interviews():
 @student_bp.route('/dashboard/status-breakdown', methods=['GET'])
 @role_required('student')
 def get_status_breakdown():
-    student_id = get_jwt_identity()
+    student_id = int(get_jwt_identity())
 
     stats = db.session.query(
         Application.status,
