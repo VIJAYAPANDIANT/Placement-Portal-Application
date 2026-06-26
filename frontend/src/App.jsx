@@ -7,48 +7,23 @@ import Login from './pages/Login';
 import RegisterStudent from './pages/RegisterStudent';
 import RegisterCompany from './pages/RegisterCompany';
 
-// Placeholder Dashboards for Milestone 2
-const AdminDashboard = () => (
-  <div className="container mt-5">
-    <div className="card shadow-sm border-0">
-      <div className="card-body p-5 text-center">
-        <h1 className="fw-bold mb-3 text-primary">Admin Dashboard</h1>
-        <p className="lead text-muted">Manage companies, student profiles, and placement drives.</p>
-        <span className="badge bg-warning text-dark py-2 px-3 fs-6">
-          ⚙️ Dashboard Content Coming Soon (Milestone 2)
-        </span>
-      </div>
-    </div>
-  </div>
-);
+// Import Admin Dashboard Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import PendingCompanies from './pages/admin/PendingCompanies';
+import PendingDrives from './pages/admin/PendingDrives';
+import StudentList from './pages/admin/StudentList';
 
-const CompanyDashboard = () => (
-  <div className="container mt-5">
-    <div className="card shadow-sm border-0">
-      <div className="card-body p-5 text-center">
-        <h1 className="fw-bold mb-3 text-success">Company Dashboard</h1>
-        <p className="lead text-muted">Create placement drives, shortlist candidates, and schedule interviews.</p>
-        <span className="badge bg-warning text-dark py-2 px-3 fs-6">
-          🏢 Dashboard Content Coming Soon (Milestone 2)
-        </span>
-      </div>
-    </div>
-  </div>
-);
+// Import Company Dashboard Pages
+import CompanyDashboard from './pages/company/CompanyDashboard';
+import CreateDrive from './pages/company/CreateDrive';
+import MyDrives from './pages/company/MyDrives';
+import DriveApplicants from './pages/company/DriveApplicants';
 
-const StudentDashboard = () => (
-  <div className="container mt-5">
-    <div className="card shadow-sm border-0">
-      <div className="card-body p-5 text-center">
-        <h1 className="fw-bold mb-3 text-info text-dark">Student Dashboard</h1>
-        <p className="lead text-muted">Apply for placement drives, track interview status, and view offers.</p>
-        <span className="badge bg-warning text-dark py-2 px-3 fs-6">
-          🎓 Dashboard Content Coming Soon (Milestone 2)
-        </span>
-      </div>
-    </div>
-  </div>
-);
+// Import Student Dashboard Pages
+import StudentDashboard from './pages/student/StudentDashboard';
+import BrowseDrives from './pages/student/BrowseDrives';
+import MyApplications from './pages/student/MyApplications';
+import MyInterviews from './pages/student/MyInterviews';
 
 function App() {
   return (
@@ -68,9 +43,9 @@ function App() {
             <Route path="/register/student" element={<RegisterStudent />} />
             <Route path="/register/company" element={<RegisterCompany />} />
             
-            {/* Protected Dashboard Routes */}
+            {/* Protected Admin Routes */}
             <Route 
-              path="/admin/*" 
+              path="/admin" 
               element={
                 <ProtectedRoute role="admin">
                   <AdminDashboard />
@@ -78,7 +53,33 @@ function App() {
               } 
             />
             <Route 
-              path="/company/*" 
+              path="/admin/companies/pending" 
+              element={
+                <ProtectedRoute role="admin">
+                  <PendingCompanies />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/drives/pending" 
+              element={
+                <ProtectedRoute role="admin">
+                  <PendingDrives />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/students" 
+              element={
+                <ProtectedRoute role="admin">
+                  <StudentList />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Protected Company Routes */}
+            <Route 
+              path="/company" 
               element={
                 <ProtectedRoute role="company">
                   <CompanyDashboard />
@@ -86,10 +87,60 @@ function App() {
               } 
             />
             <Route 
-              path="/student/*" 
+              path="/company/drives/create" 
+              element={
+                <ProtectedRoute role="company">
+                  <CreateDrive />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/company/drives" 
+              element={
+                <ProtectedRoute role="company">
+                  <MyDrives />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/company/drives/:id/applicants" 
+              element={
+                <ProtectedRoute role="company">
+                  <DriveApplicants />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Protected Student Routes */}
+            <Route 
+              path="/student" 
               element={
                 <ProtectedRoute role="student">
                   <StudentDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/drives" 
+              element={
+                <ProtectedRoute role="student">
+                  <BrowseDrives />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/applications" 
+              element={
+                <ProtectedRoute role="student">
+                  <MyApplications />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/student/interviews" 
+              element={
+                <ProtectedRoute role="student">
+                  <MyInterviews />
                 </ProtectedRoute>
               } 
             />

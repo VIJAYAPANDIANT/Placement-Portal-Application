@@ -34,23 +34,51 @@ const Navbar = () => {
             {/* Authenticated Links */}
             {isAuthenticated ? (
               <>
-                <li className="nav-item">
-                  {role === 'admin' && (
-                    <NavLink className="nav-link" to="/admin">
-                      Admin Dashboard
-                    </NavLink>
-                  )}
-                  {role === 'company' && (
-                    <NavLink className="nav-link" to="/company">
-                      Company Dashboard
-                    </NavLink>
-                  )}
-                  {role === 'student' && (
-                    <NavLink className="nav-link" to="/student">
-                      Student Dashboard
-                    </NavLink>
-                  )}
-                </li>
+                {role === 'admin' && (
+                  <>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/admin" end>Dashboard</NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/admin/companies/pending">Pending Companies</NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/admin/drives/pending">Pending Drives</NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/admin/students">Students</NavLink>
+                    </li>
+                  </>
+                )}
+                {role === 'company' && (
+                  <>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/company" end>Dashboard</NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/company/drives/create">Create Drive</NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/company/drives" end>My Drives</NavLink>
+                    </li>
+                  </>
+                )}
+                {role === 'student' && (
+                  <>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/student" end>Dashboard</NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/student/drives">Browse Drives</NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/student/applications">My Applications</NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink className="nav-link" to="/student/interviews">My Interviews</NavLink>
+                    </li>
+                  </>
+                )}
                 <li className="nav-item ms-lg-3 mt-2 mt-lg-0">
                   <span className="badge bg-primary text-capitalize me-3 py-2 px-3">
                     {role}
@@ -75,12 +103,12 @@ const Navbar = () => {
                 </li>
                 <li className="nav-item">
                   <NavLink className="nav-link" to="/register/student">
-                    Register Student
+                    Register as Student
                   </NavLink>
                 </li>
                 <li className="nav-item">
                   <NavLink className="nav-link" to="/register/company">
-                    Register Company
+                    Register as Company
                   </NavLink>
                 </li>
               </>
