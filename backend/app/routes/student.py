@@ -1,6 +1,9 @@
-from flask import Blueprint, request, jsonify
+import os
+import json
+from flask import Blueprint, request, jsonify, send_file, current_app
 from flask_jwt_extended import get_jwt_identity
 from datetime import date, datetime
+from werkzeug.utils import secure_filename
 from app import db, cache
 from app.models.company import Company
 from app.models.drive import PlacementDrive
@@ -16,7 +19,6 @@ student_bp = Blueprint('student_bp', __name__)
 @role_required('student')
 @cache.cached(timeout=300, key_prefix='approved_drives')
 def get_student_drives():
-    # Fetch drives where PlacementDrive.status is 'approved' AND related Company.approval_status is 'approved'
     drives_data = db.session.query(
         PlacementDrive, Company.name.label('company_name'), Company.industry.label('company_industry')
     ).join(Company, PlacementDrive.company_id == Company.id)\
@@ -50,23 +52,18 @@ def apply_to_drive(drive_id):
     if not drive:
         return jsonify({"error": "Placement drive not found"}), 404
 
-    # Run eligibility checks in the exact specified order
-    
-    # CHECK 1: CGPA check
     if student.cgpa < drive.eligibility_cgpa:
         return jsonify({
             "error": "CGPA does not meet eligibility requirement",
             "message": "CGPA does not meet eligibility requirement"
         }), 400
 
-    # CHECK 2: Branch check
     if student.branch not in drive.get_branches():
         return jsonify({
             "error": "Your branch is not eligible for this drive",
             "message": "Your branch is not eligible for this drive"
         }), 400
 
-    # CHECK 3: Duplicate application check
     existing = Application.query.filter_by(student_id=student.id, drive_id=drive_id).first()
     if existing:
         return jsonify({
@@ -74,7 +71,6 @@ def apply_to_drive(drive_id):
             "message": "You have already applied to this drive"
         }), 400
 
-    # Create application
     application = Application(
         student_id=student.id,
         drive_id=drive_id,
@@ -91,7 +87,6 @@ def apply_to_drive(drive_id):
 def get_student_applications():
     student_id = int(get_jwt_identity())
 
-    # Join Application with PlacementDrive and Company
     applications_data = db.session.query(
         Application.id.label('app_id'),
         Application.status.label('app_status'),
@@ -121,8 +116,6 @@ def get_student_applications():
 def get_student_interviews():
     student_id = int(get_jwt_identity())
 
-    # Query drives where the student has an Application with status in ('shortlisted', 'selected')
-    # and has a linked InterviewSchedule details
     interviews_data = db.session.query(
         InterviewSchedule.interview_date.label('interview_date'),
         InterviewSchedule.interview_mode.label('interview_mode'),
@@ -177,3 +170,109 @@ def export_csv():
         
     export_student_applications_csv.delay(student_id, student.email)
     return jsonify({"message": "Export started, you will receive an email shortly"}), 200
+
+# ==========================================
+# NEW STUDENT PROFILE ROUTES
+# ==========================================
+
+@student_bp.route('/profile', methods=['GET'])
+@role_required('student')
+def get_profile():
+    student_id = int(get_jwt_identity())
+    student = Student.query.get(student_id)
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+
+    skills_list = student.get_skills()
+
+    # Calculate profile completeness across 12 fields
+    fields = [
+        student.name, student.email, student.roll_number, student.branch,
+        student.cgpa, student.graduation_year, student.resume_url,
+        student.linkedin_url, student.github_url, student.portfolio_url,
+        student.bio, skills_list
+    ]
+
+    filled_count = 0
+    for val in fields:
+        if val is not None and val != '' and val != []:
+            filled_count += 1
+
+    profile_completeness = round((filled_count / 12.0) * 100)
+
+    return jsonify({
+        "id": student.id,
+        "name": student.name,
+        "email": student.email,
+        "roll_number": student.roll_number,
+        "branch": student.branch,
+        "cgpa": student.cgpa,
+        "graduation_year": student.graduation_year,
+        "resume_url": student.resume_url,
+        "linkedin_url": student.linkedin_url,
+        "github_url": student.github_url,
+        "portfolio_url": student.portfolio_url,
+        "bio": student.bio,
+        "skills": skills_list,
+        "profile_completeness": profile_completeness
+    }), 200
+
+@student_bp.route('/profile', methods=['PUT'])
+@role_required('student')
+def update_profile():
+    student_id = int(get_jwt_identity())
+    student = Student.query.get(student_id)
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+
+    data = request.get_json() or {}
+
+    if 'linkedin_url' in data:
+        student.linkedin_url = data['linkedin_url']
+    if 'github_url' in data:
+        student.github_url = data['github_url']
+    if 'portfolio_url' in data:
+        student.portfolio_url = data['portfolio_url']
+    if 'bio' in data:
+        student.bio = data['bio']
+    if 'skills' in data:
+        student.set_skills(data['skills'])
+
+    db.session.commit()
+    return jsonify({"message": "Profile updated successfully"}), 200
+
+@student_bp.route('/upload-resume', methods=['POST'])
+@role_required('student')
+def upload_resume():
+    student_id = int(get_jwt_identity())
+    student = Student.query.get(student_id)
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+
+    if 'resume' not in request.files:
+        return jsonify({"error": "No resume file provided"}), 400
+
+    file = request.files['resume']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    if not file.filename.lower().endswith('.pdf'):
+        return jsonify({"error": "Only PDF files allowed"}), 400
+
+    # Save to backend/uploads/resumes/<student_id>.pdf
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    upload_folder = os.path.join(base_dir, 'uploads', 'resumes')
+    os.makedirs(upload_folder, exist_ok=True)
+
+    filename = f"{student_id}.pdf"
+    file_path = os.path.join(upload_folder, filename)
+    file.save(file_path)
+
+    rel_url = f"uploads/resumes/{filename}"
+    student.resume_url = rel_url
+    db.session.commit()
+
+    return jsonify({
+        "message": "Resume uploaded",
+        "resume_url": rel_url
+    }), 200

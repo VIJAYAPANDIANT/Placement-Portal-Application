@@ -5,7 +5,7 @@ const PendingCompanies = () => {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [alert, setAlert] = useState(null); // { type: 'success'|'danger', message: '' }
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     fetchPendingCompanies();
@@ -30,7 +30,6 @@ const PendingCompanies = () => {
       setAlert(null);
       const response = await api.put(`/admin/companies/${id}/approve`, { action });
       
-      // Update state: remove company from local list immediately
       setCompanies(prev => prev.filter(company => company.id !== id));
       
       setAlert({
@@ -38,7 +37,6 @@ const PendingCompanies = () => {
         message: response.data.message || `Company successfully ${action === 'approve' ? 'approved' : 'rejected'}.`
       });
       
-      // Clear alert after 3 seconds
       setTimeout(() => setAlert(null), 3000);
     } catch (err) {
       console.error(`Error updating company ${id} status:`, err);
@@ -51,7 +49,7 @@ const PendingCompanies = () => {
 
   if (loading) {
     return (
-      <div className="container mt-5 text-center">
+      <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -62,70 +60,71 @@ const PendingCompanies = () => {
 
   if (error) {
     return (
-      <div className="container mt-5">
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
+      <div className="panel-card p-4 text-center border-danger">
+        <p className="text-danger mb-0">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold">Pending Companies Approval</h2>
-        <span className="badge bg-secondary p-2 fs-6">
-          Pending count: {companies.length}
-        </span>
-      </div>
-
+    <div>
       {alert && (
-        <div className={`alert alert-${alert.type} alert-dismissible fade show`} role="alert">
+        <div className={`alert alert-${alert.type} alert-dismissible fade show mb-4`} role="alert">
           {alert.message}
           <button type="button" className="btn-close" onClick={() => setAlert(null)} aria-label="Close"></button>
         </div>
       )}
 
-      {companies.length === 0 ? (
-        <div className="card shadow-sm border-0 mt-3">
-          <div className="card-body p-5 text-center">
-            <h4 className="text-muted">🎉 No pending companies to approve!</h4>
-            <p className="text-muted mb-0">All registered companies have been processed.</p>
-          </div>
+      <div className="panel-card">
+        <div className="panel-header">
+          <h5 className="panel-title">Pending Company Registration Approvals</h5>
+          <span className="status-pill pill-warning">
+            ● {companies.length} Pending
+          </span>
         </div>
-      ) : (
-        <div className="card shadow-sm border-0">
+
+        {companies.length === 0 ? (
+          <div className="text-center py-5">
+            <div style={{ fontSize: '2.5rem' }}>🏢</div>
+            <p className="mt-3 fw-semibold mb-1">No pending companies to review</p>
+            <small className="text-muted">All company registrations have been processed and approved.</small>
+          </div>
+        ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-dark">
+            <table className="enhanced-table">
+              <thead>
                 <tr>
-                  <th scope="col" className="ps-4">Company Name</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Industry</th>
-                  <th scope="col">HR Contact</th>
-                  <th scope="col" className="text-end pe-4">Actions</th>
+                  <th>#</th>
+                  <th>Company Name</th>
+                  <th>Email</th>
+                  <th>Industry</th>
+                  <th>HR Contact</th>
+                  <th className="text-end">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {companies.map(company => (
+                {companies.map((company, idx) => (
                   <tr key={company.id}>
-                    <td className="fw-semibold ps-4">{company.name}</td>
+                    <td className="text-muted fw-bold" style={{ fontSize: '11px' }}>{idx + 1}</td>
+                    <td className="fw-bold">{company.name}</td>
                     <td>{company.email}</td>
                     <td>
-                      <span className="badge bg-light text-dark border">
-                        {company.industry || 'N/A'}
+                      <span className="status-pill pill-info">
+                        {company.industry || 'General IT'}
                       </span>
                     </td>
-                    <td>{company.hr_contact || 'N/A'}</td>
-                    <td className="text-end pe-4">
+                    <td>{company.hr_contact || 'Not provided'}</td>
+                    <td className="text-end">
                       <button
-                        className="btn btn-success btn-sm me-2 fw-semibold px-3"
+                        className="btn btn-sm btn-success me-2 px-3"
+                        style={{ borderRadius: '6px', fontSize: '12px' }}
                         onClick={() => handleApproveReject(company.id, 'approve')}
                       >
                         Approve
                       </button>
                       <button
-                        className="btn btn-danger btn-sm fw-semibold px-3"
+                        className="btn btn-sm btn-outline-danger px-3"
+                        style={{ borderRadius: '6px', fontSize: '12px' }}
                         onClick={() => handleApproveReject(company.id, 'reject')}
                       >
                         Reject
@@ -136,8 +135,8 @@ const PendingCompanies = () => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

@@ -40,7 +40,6 @@ const AdminDashboard = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch data concurrently
         const [statsRes, branchRes, trendRes] = await Promise.all([
           api.get('/admin/dashboard/stats'),
           api.get('/admin/dashboard/branch-placement-rate'),
@@ -63,7 +62,7 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="container mt-5 text-center">
+      <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -74,29 +73,31 @@ const AdminDashboard = () => {
 
   if (error) {
     return (
-      <div className="container mt-5">
-        <div className="alert alert-danger" role="alert">
-          <h4 className="alert-heading">Error Loading Dashboard</h4>
-          <p>{error}</p>
-          <hr />
-          <button className="btn btn-outline-danger btn-sm" onClick={() => window.location.reload()}>
-            Retry Loading
-          </button>
-        </div>
+      <div className="panel-card p-4 text-center border-danger">
+        <div style={{ fontSize: '2rem' }}>⚠️</div>
+        <h5 className="mt-2 text-danger">Error Loading Dashboard</h5>
+        <p className="text-muted mb-3">{error}</p>
+        <button className="btn btn-outline-danger btn-sm" onClick={() => window.location.reload()}>
+          Retry Loading
+        </button>
       </div>
     );
   }
 
-  // Prepare chart data for Branch-wise Placement Rate (Bar Chart)
+  const todayFormatted = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
   const barChartData = {
     labels: branchRate.map(item => item.branch),
     datasets: [
       {
         label: 'Placement Rate (%)',
         data: branchRate.map(item => item.placement_rate),
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: 'rgba(37, 99, 235, 0.6)',
+        borderColor: 'rgba(37, 99, 235, 1)',
         borderWidth: 1,
+        borderRadius: 6,
       },
     ],
   };
@@ -104,29 +105,18 @@ const AdminDashboard = () => {
   const barChartOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: 'Branch-wise Placement Rate (%)',
-        font: { size: 16 }
-      },
+      legend: { display: false },
+      title: { display: false }
     },
     scales: {
       y: {
         beginAtZero: true,
         max: 100,
-        ticks: {
-          callback: function(value) {
-            return value + '%';
-          }
-        }
+        ticks: { callback: (val) => val + '%' }
       }
     }
   };
 
-  // Prepare chart data for Monthly Application Trend (Line Chart)
   const lineChartData = {
     labels: driveTrend.map(item => item.month),
     datasets: [
@@ -134,10 +124,10 @@ const AdminDashboard = () => {
         label: 'Applications Count',
         data: driveTrend.map(item => item.count),
         fill: true,
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(20, 184, 166, 0.15)',
+        borderColor: 'rgba(20, 184, 166, 1)',
         tension: 0.3,
-        pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+        pointBackgroundColor: 'rgba(20, 184, 166, 1)',
       },
     ],
   };
@@ -145,95 +135,84 @@ const AdminDashboard = () => {
   const lineChartOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: 'Monthly Application Trend (Current Year)',
-        font: { size: 16 }
-      },
+      legend: { display: false },
+      title: { display: false }
     },
     scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1
-        }
-      }
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
     }
   };
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4 fw-bold">Admin Dashboard</h2>
-      
-      {/* 4 Summary Cards */}
-      <div className="row g-4 mb-5">
+    <div>
+      {/* Greeting Header */}
+      <div className="mb-4">
+        <h4 className="fw-bold mb-1">Good morning, Admin 👋</h4>
+        <p className="text-muted mb-0" style={{ fontSize: '13px' }}>{todayFormatted} — Here is what is happening across placement drives today.</p>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="row g-3 mb-4">
         <div className="col-md-3">
-          <div className="card text-white bg-primary h-100 shadow-sm border-0">
-            <div className="card-body d-flex flex-column justify-content-between p-4">
-              <div>
-                <h6 className="text-uppercase text-white-50">Total Students</h6>
-                <h2 className="display-5 fw-bold">{stats?.total_students || 0}</h2>
-              </div>
-              <div className="mt-3">
-                <span className="fs-6">👤 Registered Students</span>
-              </div>
-            </div>
+          <div className="kpi-card">
+            <div className="kpi-label">Total Students</div>
+            <div className="kpi-value text-primary">{stats?.total_students || 0}</div>
+            <div className="kpi-sub">🎓 Registered Candidates</div>
+            <div className="trend-up"><span>↑</span> Active Cohort</div>
           </div>
         </div>
         <div className="col-md-3">
-          <div className="card text-white bg-success h-100 shadow-sm border-0">
-            <div className="card-body d-flex flex-column justify-content-between p-4">
-              <div>
-                <h6 className="text-uppercase text-white-50">Total Companies</h6>
-                <h2 className="display-5 fw-bold">{stats?.total_companies || 0}</h2>
-              </div>
-              <div className="mt-3">
-                <span className="fs-6">🏢 Approved & Active</span>
-              </div>
-            </div>
+          <div className="kpi-card">
+            <div className="kpi-label">Total Companies</div>
+            <div className="kpi-value text-success">{stats?.total_companies || 0}</div>
+            <div className="kpi-sub">🏢 Approved Hiring Partners</div>
+            <div className="trend-up"><span>↑</span> Verified Accounts</div>
           </div>
         </div>
         <div className="col-md-3">
-          <div className="card text-white bg-warning text-dark h-100 shadow-sm border-0">
-            <div className="card-body d-flex flex-column justify-content-between p-4">
-              <div>
-                <h6 className="text-uppercase text-dark-50">Total Drives</h6>
-                <h2 className="display-5 fw-bold">{stats?.total_drives || 0}</h2>
-              </div>
-              <div className="mt-3">
-                <span className="fs-6">📢 Approved Placement Drives</span>
-              </div>
-            </div>
+          <div className="kpi-card">
+            <div className="kpi-label">Total Drives</div>
+            <div className="kpi-value text-warning">{stats?.total_drives || 0}</div>
+            <div className="kpi-sub">🎯 Active Recruitment Drives</div>
+            <div className="trend-neutral"><span>•</span> Ongoing Drives</div>
           </div>
         </div>
         <div className="col-md-3">
-          <div className="card text-white bg-danger h-100 shadow-sm border-0">
-            <div className="card-body d-flex flex-column justify-content-between p-4">
-              <div>
-                <h6 className="text-uppercase text-white-50">Total Selections</h6>
-                <h2 className="display-5 fw-bold">{stats?.total_selections || 0}</h2>
-              </div>
-              <div className="mt-3">
-                <span className="fs-6">🎉 Placed Students</span>
-              </div>
-            </div>
+          <div className="kpi-card">
+            <div className="kpi-label">Total Selections</div>
+            <div className="kpi-value text-info">{stats?.total_selections || 0}</div>
+            <div className="kpi-sub">🎉 Successfully Placed</div>
+            <div className="trend-up"><span>↑</span> Placed Students</div>
           </div>
         </div>
       </div>
 
-      {/* Two Charts Side by Side */}
-      <div className="row g-4 mb-5">
+      {/* Analytics Charts */}
+      <div className="row g-3">
         <div className="col-lg-6">
-          <div className="card shadow-sm border-0 p-4">
-            <Bar data={barChartData} options={barChartOptions} />
+          <div className="panel-card">
+            <div className="panel-header">
+              <div>
+                <h5 className="panel-title">Placement Rate by Branch — 2025–26 Batch</h5>
+                <small className="text-muted" style={{ fontSize: '11px' }}>Percentage of registered students placed across academic departments.</small>
+              </div>
+            </div>
+            <div className="panel-body">
+              <Bar data={barChartData} options={barChartOptions} />
+            </div>
           </div>
         </div>
         <div className="col-lg-6">
-          <div className="card shadow-sm border-0 p-4">
-            <Line data={lineChartData} options={lineChartOptions} />
+          <div className="panel-card">
+            <div className="panel-header">
+              <div>
+                <h5 className="panel-title">Monthly Application Trend</h5>
+                <small className="text-muted" style={{ fontSize: '11px' }}>Volume of student job applications received per month during the current academic year.</small>
+              </div>
+            </div>
+            <div className="panel-body">
+              <Line data={lineChartData} options={lineChartOptions} />
+            </div>
           </div>
         </div>
       </div>

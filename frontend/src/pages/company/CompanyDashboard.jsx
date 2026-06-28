@@ -11,7 +11,6 @@ import {
   Legend
 } from 'chart.js';
 
-// Register Chart.js elements
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -46,8 +45,8 @@ const CompanyDashboard = () => {
 
   if (loading) {
     return (
-      <div className="container mt-5 text-center">
-        <div className="spinner-border text-success" role="status">
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
         <p className="mt-3 text-muted">Loading recruitment analytics...</p>
@@ -57,20 +56,12 @@ const CompanyDashboard = () => {
 
   if (error) {
     return (
-      <div className="container mt-5">
-        <div className="alert alert-danger" role="alert">
-          <h4 className="alert-heading">Dashboard Error</h4>
-          <p>{error}</p>
-          <hr />
-          <button className="btn btn-outline-danger btn-sm" onClick={fetchFunnelData}>
-            Retry
-          </button>
-        </div>
+      <div className="panel-card p-4 text-center border-danger">
+        <p className="text-danger mb-0">{error}</p>
       </div>
     );
   }
 
-  // Chart Data preparation
   const chartData = {
     labels: ['Applied', 'Shortlisted', 'Selected', 'Rejected'],
     datasets: [
@@ -83,18 +74,19 @@ const CompanyDashboard = () => {
           funnel?.rejected || 0
         ],
         backgroundColor: [
-          'rgba(54, 162, 235, 0.6)',   // Blue for Applied
-          'rgba(255, 206, 86, 0.6)',   // Yellow for Shortlisted
-          'rgba(75, 192, 192, 0.6)',   // Green for Selected
-          'rgba(255, 99, 132, 0.6)'    // Red for Rejected
+          'rgba(37, 99, 235, 0.65)',
+          'rgba(217, 119, 6, 0.65)',
+          'rgba(22, 163, 74, 0.65)',
+          'rgba(220, 38, 38, 0.65)'
         ],
         borderColor: [
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(255, 99, 132, 1)'
+          'rgba(37, 99, 235, 1)',
+          'rgba(217, 119, 6, 1)',
+          'rgba(22, 163, 74, 1)',
+          'rgba(220, 38, 38, 1)'
         ],
-        borderWidth: 1
+        borderWidth: 1,
+        borderRadius: 6
       }
     ]
   };
@@ -102,65 +94,65 @@ const CompanyDashboard = () => {
   const chartOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        display: false // Hide legend since dataset has color-coded individual bars
-      },
-      title: {
-        display: true,
-        text: 'Recruitment Funnel Stage Overview',
-        font: { size: 16 }
-      }
+      legend: { display: false },
+      title: { display: false }
     },
     scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1
-        }
-      }
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
     }
   };
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4 fw-bold">Company Dashboard</h2>
+    <div>
+      <div className="mb-4">
+        <h4 className="fw-bold mb-1">Welcome, Hiring Partner 👋</h4>
+        <p className="text-muted mb-0" style={{ fontSize: '13px' }}>Track student application volume and candidate progression through your recruitment funnel.</p>
+      </div>
 
-      <div className="row g-4">
-        {/* Left Side: Funnel Chart */}
-        <div className="col-lg-8">
-          <div className="card shadow-sm border-0 p-4 h-100">
-            <Bar data={chartData} options={chartOptions} />
+      <div className="row g-3 mb-4">
+        <div className="col-md-3">
+          <div className="kpi-card">
+            <div className="kpi-label">Total Applied</div>
+            <div className="kpi-value text-info">{funnel?.applied || 0}</div>
+            <div className="kpi-sub">📝 Applications Received</div>
+            <div className="trend-up"><span>↑</span> Inbound Profiles</div>
           </div>
         </div>
-
-        {/* Right Side: Funnel Metrics cards */}
-        <div className="col-lg-4">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-header bg-dark text-white p-3">
-              <h5 className="mb-0 fw-bold">Application Statistics</h5>
-            </div>
-            <div className="card-body d-flex flex-column justify-content-around p-4">
-              <div className="border-start border-primary border-4 ps-3 py-1 mb-3">
-                <span className="text-muted text-uppercase d-block small fw-bold">Total Applied</span>
-                <span className="fs-3 fw-bold text-primary">{funnel?.applied || 0}</span>
-              </div>
-              
-              <div className="border-start border-warning border-4 ps-3 py-1 mb-3">
-                <span className="text-muted text-uppercase d-block small fw-bold">Shortlisted</span>
-                <span className="fs-3 fw-bold text-warning">{funnel?.shortlisted || 0}</span>
-              </div>
-
-              <div className="border-start border-success border-4 ps-3 py-1 mb-3">
-                <span className="text-muted text-uppercase d-block small fw-bold">Selected</span>
-                <span className="fs-3 fw-bold text-success">{funnel?.selected || 0}</span>
-              </div>
-
-              <div className="border-start border-danger border-4 ps-3 py-1">
-                <span className="text-muted text-uppercase d-block small fw-bold">Rejected</span>
-                <span className="fs-3 fw-bold text-danger">{funnel?.rejected || 0}</span>
-              </div>
-            </div>
+        <div className="col-md-3">
+          <div className="kpi-card">
+            <div className="kpi-label">Shortlisted</div>
+            <div className="kpi-value text-warning">{funnel?.shortlisted || 0}</div>
+            <div className="kpi-sub">⭐ Qualified Candidates</div>
+            <div className="trend-neutral"><span>•</span> Interview Stage</div>
           </div>
+        </div>
+        <div className="col-md-3">
+          <div className="kpi-card">
+            <div className="kpi-label">Selected</div>
+            <div className="kpi-value text-success">{funnel?.selected || 0}</div>
+            <div className="kpi-sub">🎉 Offers Extended</div>
+            <div className="trend-up"><span>↑</span> Hired Candidates</div>
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="kpi-card">
+            <div className="kpi-label">Rejected</div>
+            <div className="kpi-value text-danger">{funnel?.rejected || 0}</div>
+            <div className="kpi-sub">❌ Profiles Archived</div>
+            <div className="trend-down"><span>•</span> Not Selected</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="panel-card">
+        <div className="panel-header">
+          <div>
+            <h5 className="panel-title">Recruitment Funnel Stage Overview</h5>
+            <small className="text-muted" style={{ fontSize: '11px' }}>Visualizing student counts at each progression stage of active placement drives.</small>
+          </div>
+        </div>
+        <div className="panel-body">
+          <Bar data={chartData} options={chartOptions} />
         </div>
       </div>
     </div>

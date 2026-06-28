@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 
 const MyApplications = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [exportAlert, setExportAlert] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -24,25 +27,46 @@ const MyApplications = () => {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      setExporting(true);
+      setExportAlert(null);
+      const res = await api.post('/student/export-csv');
+      setExportAlert({
+        type: 'success',
+        message: res.data.message || 'Export started, you will receive an email shortly'
+      });
+      setTimeout(() => setExportAlert(null), 4000);
+    } catch (err) {
+      console.error('Error exporting CSV:', err);
+      setExportAlert({
+        type: 'danger',
+        message: err.response?.data?.error || 'Failed to trigger CSV export.'
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'applied':
-        return <span className="badge bg-primary text-capitalize px-3 py-2">Applied</span>;
+        return <span className="status-pill pill-info">● Applied</span>;
       case 'shortlisted':
-        return <span className="badge bg-warning text-dark text-capitalize px-3 py-2">Shortlisted</span>;
+        return <span className="status-pill pill-purple">● Shortlisted</span>;
       case 'selected':
-        return <span className="badge bg-success text-capitalize px-3 py-2">Selected</span>;
+        return <span className="status-pill pill-success">● Selected</span>;
       case 'rejected':
-        return <span className="badge bg-danger text-capitalize px-3 py-2">Rejected</span>;
+        return <span className="status-pill pill-danger">● Rejected</span>;
       default:
-        return <span className="badge bg-secondary text-capitalize px-3 py-2">{status}</span>;
+        return <span className="status-pill pill-warning">● {status}</span>;
     }
   };
 
   if (loading) {
     return (
-      <div className="container mt-5 text-center">
-        <div className="spinner-border text-info" role="status">
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
         <p className="mt-3 text-muted">Retrieving your application history...</p>
@@ -52,58 +76,82 @@ const MyApplications = () => {
 
   if (error) {
     return (
-      <div className="container mt-5">
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
+      <div className="panel-card p-4 text-center border-danger">
+        <p className="text-danger mb-0">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4 fw-bold">My Applications</h2>
-
-      {applications.length === 0 ? (
-        <div className="card shadow-sm border-0 mt-3">
-          <div className="card-body p-5 text-center">
-            <h4 className="text-muted mb-2">No applications submitted yet</h4>
-            <p className="text-muted mb-4">You haven't applied to any drives yet.</p>
-            <a href="/student/drives" className="btn btn-primary fw-bold px-4">
-              Explore Active Drives
-            </a>
-          </div>
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h4 className="fw-bold mb-1">My Application History</h4>
+          <p className="text-muted mb-0" style={{ fontSize: '13px' }}>View current status and export records for all submitted drive applications.</p>
         </div>
-      ) : (
-        <div className="card shadow-sm border-0">
+        {applications.length > 0 && (
+          <button
+            className="btn btn-outline-primary fw-bold btn-sm px-3 py-2"
+            style={{ borderRadius: '8px' }}
+            onClick={handleExportCSV}
+            disabled={exporting}
+          >
+            {exporting ? '⏳ Starting Export...' : '📥 Export Applications CSV'}
+          </button>
+        )}
+      </div>
+
+      {exportAlert && (
+        <div className={`alert alert-${exportAlert.type} alert-dismissible fade show mb-4`} role="alert">
+          {exportAlert.message}
+          <button type="button" className="btn-close" onClick={() => setExportAlert(null)} aria-label="Close"></button>
+        </div>
+      )}
+
+      <div className="panel-card">
+        <div className="panel-header">
+          <h5 className="panel-title">Submitted Drive Applications</h5>
+          <span className="status-pill pill-info">📝 {applications.length} Total Applications</span>
+        </div>
+
+        {applications.length === 0 ? (
+          <div className="text-center py-5">
+            <div style={{ fontSize: '2.5rem' }}>📝</div>
+            <p className="mt-3 fw-semibold mb-1">No applications submitted yet</p>
+            <small className="text-muted d-block mb-4">Explore available campus drives and apply to start tracking your recruitment status.</small>
+            <Link to="/student/drives" className="btn btn-sm btn-primary fw-bold px-4" style={{ borderRadius: '6px' }}>
+              Explore Active Drives
+            </Link>
+          </div>
+        ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-dark">
+            <table className="enhanced-table">
+              <thead>
                 <tr>
-                  <th scope="col" className="ps-4">Company Name</th>
-                  <th scope="col">Job Title</th>
-                  <th scope="col">Package</th>
-                  <th scope="col">Applied On</th>
-                  <th scope="col" className="pe-4">Status</th>
+                  <th>#</th>
+                  <th>Company Name</th>
+                  <th>Job Title</th>
+                  <th>Package LPA</th>
+                  <th>Applied On</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {applications.map(app => (
+                {applications.map((app, idx) => (
                   <tr key={app.id}>
-                    <td className="fw-semibold ps-4 text-primary">{app.company_name}</td>
-                    <td className="fw-medium">{app.job_title}</td>
-                    <td>
-                      <span className="fw-bold">{app.package_lpa} LPA</span>
-                    </td>
+                    <td className="text-muted fw-bold" style={{ fontSize: '11px' }}>{idx + 1}</td>
+                    <td className="fw-bold text-primary">{app.company_name}</td>
+                    <td className="fw-bold">{app.job_title}</td>
+                    <td><span className="status-pill pill-success">{app.package_lpa} LPA</span></td>
                     <td>{app.applied_on || 'N/A'}</td>
-                    <td className="pe-4">{getStatusBadge(app.status)}</td>
+                    <td>{getStatusBadge(app.status)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

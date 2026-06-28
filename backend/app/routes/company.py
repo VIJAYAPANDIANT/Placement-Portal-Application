@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify
+import os
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import get_jwt_identity
 from datetime import datetime
 from app import db
@@ -34,7 +35,6 @@ def create_drive():
     application_deadline_str = data.get('application_deadline')
     package_lpa = data.get('package_lpa')
 
-    # Basic validations
     if not all([job_title, eligibility_cgpa, eligible_branches, application_deadline_str, package_lpa]):
         return jsonify({"error": "Missing required fields"}), 400
 
@@ -70,7 +70,6 @@ def get_company_drives():
     
     result = []
     for drive in drives:
-        # Count applications for this drive
         applicant_count = Application.query.filter_by(drive_id=drive.id).count()
         result.append({
             "id": drive.id,
@@ -94,11 +93,11 @@ def get_drive_applicants(drive_id):
     if drive.company_id != int(get_jwt_identity()):
         return jsonify({"error": "Access denied"}), 403
 
-    # Join Application with Student to retrieve requested fields
     applicants_data = db.session.query(
         Application.id.label('application_id'),
         Application.status.label('application_status'),
         Application.applied_on.label('applied_on'),
+        Student.id.label('student_id'),
         Student.name.label('student_name'),
         Student.roll_number.label('roll_number'),
         Student.branch.label('branch'),
@@ -109,6 +108,7 @@ def get_drive_applicants(drive_id):
     result = []
     for app in applicants_data:
         result.append({
+            "student_id": app.student_id,
             "student_name": app.student_name,
             "roll_number": app.roll_number,
             "branch": app.branch,
@@ -197,7 +197,6 @@ def schedule_interview(drive_id):
 def get_funnel_stats():
     company_id = int(get_jwt_identity())
     
-    # Query statuses count by grouping applications on drives owned by company_id
     stats = db.session.query(
         Application.status,
         db.func.count(Application.id)
@@ -211,3 +210,62 @@ def get_funnel_stats():
             stats_dict[status] = count
 
     return jsonify(stats_dict), 200
+
+# ==========================================
+# NEW COMPANY STUDENT PROFILE & RESUME VIEW ROUTES
+# ==========================================
+
+def check_company_student_access(company_id, student_id):
+    """Verifies student has applied to at least one drive belonging to company_id."""
+    has_applied = db.session.query(Application.id).join(
+        PlacementDrive, Application.drive_id == PlacementDrive.id
+    ).filter(
+        PlacementDrive.company_id == company_id,
+        Application.student_id == student_id
+    ).first()
+    return has_applied is not None
+
+@company_bp.route('/students/<int:student_id>/profile', methods=['GET'])
+@role_required('company')
+def get_student_profile_for_company(student_id):
+    company_id = int(get_jwt_identity())
+    if not check_company_student_access(company_id, student_id):
+        return jsonify({"error": "Access denied"}), 403
+
+    student = Student.query.get(student_id)
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+
+    return jsonify({
+        "id": student.id,
+        "name": student.name,
+        "roll_number": student.roll_number,
+        "branch": student.branch,
+        "cgpa": student.cgpa,
+        "graduation_year": student.graduation_year,
+        "linkedin_url": student.linkedin_url,
+        "github_url": student.github_url,
+        "portfolio_url": student.portfolio_url,
+        "bio": student.bio,
+        "skills": student.get_skills(),
+        "resume_url": student.resume_url
+    }), 200
+
+@company_bp.route('/students/<int:student_id>/resume', methods=['GET'])
+@role_required('company')
+def get_student_resume_for_company(student_id):
+    company_id = int(get_jwt_identity())
+    if not check_company_student_access(company_id, student_id):
+        return jsonify({"error": "Access denied"}), 403
+
+    student = Student.query.get(student_id)
+    if not student or not student.resume_url:
+        return jsonify({"error": "No resume uploaded"}), 404
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    file_path = os.path.join(base_dir, student.resume_url.replace('/', os.sep))
+
+    if not os.path.exists(file_path):
+        return jsonify({"error": "Resume file not found on server"}), 404
+
+    return send_file(file_path, mimetype='application/pdf')

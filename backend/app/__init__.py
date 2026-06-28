@@ -1,4 +1,5 @@
-from flask import Flask, jsonify
+import os
+from flask import Flask, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
@@ -36,7 +37,7 @@ def create_app(config_class='config.Config'):
     app = Flask(__name__)
     CORS(app)
     
-    # Load settings (database URI, JWT secret key) from config.py's Config class
+    # Load settings from config.py's Config class
     app.config.from_object(config_class)
     
     # Bind extensions to the current app instance
@@ -48,11 +49,10 @@ def create_app(config_class='config.Config'):
     celery = make_celery(app)
     app.celery = celery
     
-    # Import and register the authentication blueprint
+    # Import and register blueprints
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     
-    # Import and register the admin blueprint
     from app.routes.admin import admin_bp
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     
@@ -66,10 +66,15 @@ def create_app(config_class='config.Config'):
     def index():
         return jsonify({
             "status": "online",
-            "message": "Placement Portal backend API is active. Use frontend at http://localhost:5173 or endpoints /api/..."
+            "message": "Placement Portal backend API is active."
         }), 200
+
+    @app.route('/uploads/<path:filename>')
+    def serve_upload(filename):
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        upload_folder = os.path.join(base_dir, 'uploads')
+        return send_from_directory(upload_folder, filename)
     
-    # Ensure database models are registered and create tables
     with app.app_context():
         from app import models
         db.create_all()

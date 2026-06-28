@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { Pie } from 'react-chartjs-2';
 import {
@@ -9,7 +10,6 @@ import {
   Title
 } from 'chart.js';
 
-// Register Chart.js elements
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -42,8 +42,8 @@ const StudentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="container mt-5 text-center">
-        <div className="spinner-border text-info" role="status">
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
         <p className="mt-3 text-muted">Retrieving placement status...</p>
@@ -53,27 +53,18 @@ const StudentDashboard = () => {
 
   if (error) {
     return (
-      <div className="container mt-5">
-        <div className="alert alert-danger" role="alert">
-          <h4 className="alert-heading">Dashboard Error</h4>
-          <p>{error}</p>
-          <hr />
-          <button className="btn btn-outline-danger btn-sm" onClick={fetchStatusBreakdown}>
-            Retry
-          </button>
-        </div>
+      <div className="panel-card p-4 text-center border-danger">
+        <p className="text-danger mb-0">{error}</p>
       </div>
     );
   }
 
-  // Check if all counts are 0
   const totalApplications = 
     (breakdown?.applied || 0) + 
     (breakdown?.shortlisted || 0) + 
     (breakdown?.selected || 0) + 
     (breakdown?.rejected || 0);
 
-  // Pie Chart Data
   const chartData = {
     labels: ['Applied', 'Shortlisted', 'Selected', 'Rejected'],
     datasets: [
@@ -85,16 +76,16 @@ const StudentDashboard = () => {
           breakdown?.rejected || 0
         ],
         backgroundColor: [
-          'rgba(54, 162, 235, 0.7)',   // Blue for Applied
-          'rgba(255, 206, 86, 0.7)',   // Yellow for Shortlisted
-          'rgba(75, 192, 192, 0.7)',   // Green for Selected
-          'rgba(255, 99, 132, 0.7)'    // Red for Rejected
+          'rgba(37, 99, 235, 0.7)',
+          'rgba(217, 119, 6, 0.7)',
+          'rgba(22, 163, 74, 0.7)',
+          'rgba(220, 38, 38, 0.7)'
         ],
         borderColor: [
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(255, 99, 132, 1)'
+          'rgba(37, 99, 235, 1)',
+          'rgba(217, 119, 6, 1)',
+          'rgba(22, 163, 74, 1)',
+          'rgba(220, 38, 38, 1)'
         ],
         borderWidth: 1
       }
@@ -106,85 +97,73 @@ const StudentDashboard = () => {
     plugins: {
       legend: {
         position: 'bottom',
-        labels: {
-          padding: 20,
-          font: { size: 13 }
-        }
+        labels: { padding: 15, font: { size: 12 } }
       },
-      title: {
-        display: true,
-        text: 'My Application Status Distribution',
-        font: { size: 16 }
-      }
+      title: { display: false }
     }
   };
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4 fw-bold">Student Dashboard</h2>
+    <div>
+      <div className="mb-4">
+        <h4 className="fw-bold mb-1">Welcome Back 👋</h4>
+        <p className="text-muted mb-0" style={{ fontSize: '13px' }}>Track your active job applications, interview schedules, and placement status.</p>
+      </div>
 
-      {totalApplications === 0 ? (
-        <div className="card shadow-sm border-0 py-5">
-          <div className="card-body text-center">
-            <span className="fs-1">🎓</span>
-            <h4 className="text-muted mt-3 fw-bold">No applications yet</h4>
-            <p className="text-muted mb-4">You haven't applied to any placement drives yet.</p>
-            <a href="/student/drives" className="btn btn-primary fw-bold px-4">
-              Browse & Apply for Drives
-            </a>
+      <div className="row g-3 mb-4">
+        <div className="col-md-3 col-6">
+          <div className="kpi-card">
+            <div className="kpi-label">Applied</div>
+            <div className="kpi-value text-info">{breakdown?.applied || 0}</div>
+            <div className="kpi-sub">📝 Submissions Sent</div>
+            <div className="trend-up"><span>•</span> Active Drives</div>
           </div>
         </div>
-      ) : (
-        <div className="row g-4">
-          {/* Chart Card */}
-          <div className="col-lg-5 col-md-6 mx-auto">
-            <div className="card shadow-sm border-0 p-4 text-center">
-              <div style={{ maxWidth: '380px', margin: '0 auto' }}>
-                <Pie data={chartData} options={chartOptions} />
-              </div>
-            </div>
+        <div className="col-md-3 col-6">
+          <div className="kpi-card">
+            <div className="kpi-label">Shortlisted</div>
+            <div className="kpi-value text-warning">{breakdown?.shortlisted || 0}</div>
+            <div className="kpi-sub">⭐ Interview Ready</div>
+            <div className="trend-neutral"><span>•</span> In Progress</div>
           </div>
+        </div>
+        <div className="col-md-3 col-6">
+          <div className="kpi-card">
+            <div className="kpi-label">Selected</div>
+            <div className="kpi-value text-success">{breakdown?.selected || 0}</div>
+            <div className="kpi-sub">🎉 Job Offers</div>
+            <div className="trend-up"><span>↑</span> Placed Status</div>
+          </div>
+        </div>
+        <div className="col-md-3 col-6">
+          <div className="kpi-card">
+            <div className="kpi-label">Rejected</div>
+            <div className="kpi-value text-danger">{breakdown?.rejected || 0}</div>
+            <div className="kpi-sub">❌ Archived Applications</div>
+            <div className="trend-down"><span>•</span> Not Selected</div>
+          </div>
+        </div>
+      </div>
 
-          {/* Stats summary cards */}
-          <div className="col-12 mt-5">
-            <div className="row g-4">
-              {/* Applied */}
-              <div className="col-md-3 col-6">
-                <div className="card bg-primary text-white shadow-sm border-0 h-100">
-                  <div className="card-body p-4 text-center">
-                    <h6 className="text-uppercase text-white-50 small mb-2">Applied</h6>
-                    <h2 className="display-6 fw-bold mb-0">{breakdown?.applied || 0}</h2>
-                  </div>
-                </div>
+      {totalApplications === 0 ? (
+        <div className="panel-card p-5 text-center">
+          <div style={{ fontSize: '2.5rem' }}>🎓</div>
+          <p className="mt-3 fw-semibold mb-1">No active placement applications yet</p>
+          <small className="text-muted d-block mb-4">Explore upcoming campus recruitment drives and submit applications before deadlines.</small>
+          <Link to="/student/drives" className="btn btn-sm btn-primary fw-bold px-4" style={{ borderRadius: '6px' }}>
+            Browse & Apply for Drives
+          </Link>
+        </div>
+      ) : (
+        <div className="row g-3">
+          <div className="col-lg-6 mx-auto">
+            <div className="panel-card">
+              <div className="panel-header text-center">
+                <h5 className="panel-title">Application Status Distribution</h5>
               </div>
-
-              {/* Shortlisted */}
-              <div className="col-md-3 col-6">
-                <div className="card bg-warning text-dark shadow-sm border-0 h-100">
-                  <div className="card-body p-4 text-center">
-                    <h6 className="text-uppercase text-dark-50 small mb-2">Shortlisted</h6>
-                    <h2 className="display-6 fw-bold mb-0">{breakdown?.shortlisted || 0}</h2>
-                  </div>
-                </div>
-              </div>
-
-              {/* Selected */}
-              <div className="col-md-3 col-6">
-                <div className="card bg-success text-white shadow-sm border-0 h-100">
-                  <div className="card-body p-4 text-center">
-                    <h6 className="text-uppercase text-white-50 small mb-2">Selected</h6>
-                    <h2 className="display-6 fw-bold mb-0">{breakdown?.selected || 0}</h2>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rejected */}
-              <div className="col-md-3 col-6">
-                <div className="card bg-danger text-white shadow-sm border-0 h-100">
-                  <div className="card-body p-4 text-center">
-                    <h6 className="text-uppercase text-white-50 small mb-2">Rejected</h6>
-                    <h2 className="display-6 fw-bold mb-0">{breakdown?.rejected || 0}</h2>
-                  </div>
+              <div className="panel-body d-flex justify-content-center">
+                <div style={{ maxWidth: '340px', width: '100%' }}>
+                  <Pie data={chartData} options={chartOptions} />
                 </div>
               </div>
             </div>
