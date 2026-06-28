@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from datetime import date
-from app import db
+from app import db, cache
 from app.utils.decorators import role_required
 from app.models import Company, Student, PlacementDrive, Application
 
@@ -169,6 +169,7 @@ def blacklist_student(student_id):
 
 @admin_bp.route('/dashboard/stats', methods=['GET'])
 @role_required('admin')
+@cache.cached(timeout=600, key_prefix='admin_stats')
 def get_dashboard_stats():
     """
     GET /dashboard/stats

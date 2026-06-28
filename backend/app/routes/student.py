@@ -1,18 +1,20 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
 from datetime import date, datetime
-from app import db
+from app import db, cache
 from app.models.company import Company
 from app.models.drive import PlacementDrive
 from app.models.application import Application
 from app.models.student import Student
 from app.models.interview import InterviewSchedule
 from app.utils.decorators import role_required
+from app.tasks.celery_tasks import export_student_applications_csv
 
 student_bp = Blueprint('student_bp', __name__)
 
 @student_bp.route('/drives', methods=['GET'])
 @role_required('student')
+@cache.cached(timeout=300, key_prefix='approved_drives')
 def get_student_drives():
     # Fetch drives where PlacementDrive.status is 'approved' AND related Company.approval_status is 'approved'
     drives_data = db.session.query(
@@ -164,3 +166,14 @@ def get_status_breakdown():
             stats_dict[status] = count
 
     return jsonify(stats_dict), 200
+
+@student_bp.route('/export-csv', methods=['POST'])
+@role_required('student')
+def export_csv():
+    student_id = int(get_jwt_identity())
+    student = Student.query.get(student_id)
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+        
+    export_student_applications_csv.delay(student_id, student.email)
+    return jsonify({"message": "Export started, you will receive an email shortly"}), 200

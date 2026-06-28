@@ -9,3 +9,20 @@ class Config:
     # The secret key used by Flask-JWT-Extended to sign and encode JWT tokens.
     # In a production environment, this should be a secure, random string loaded from environment variables.
     JWT_SECRET_KEY = 'super-secret-key-change-in-production'
+
+    # Redis config (broker and result backend)
+    CELERY_BROKER_URL = 'redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+    # Flask-Mail config (use Gmail SMTP for simplicity)
+    MAIL_SERVER = 'smtp.gmail.com'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = 'your-email@gmail.com'
+    MAIL_PASSWORD = 'your-app-password'
+    MAIL_DEFAULT_SENDER = 'your-email@gmail.com'
+
+    # Flask-Caching config
+    CACHE_TYPE = 'RedisCache'
+    CACHE_REDIS_URL = 'redis://localhost:6379/0'
+    CACHE_DEFAULT_TIMEOUT = 300

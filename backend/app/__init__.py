@@ -2,11 +2,31 @@ from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
+from flask_mail import Mail
+from flask_caching import Cache
+from celery import Celery
 
 # Globally instantiate database and JWT extensions.
-# Other components will import these instances to interact with the database or JWT.
 db = SQLAlchemy()
 jwt = JWTManager()
+mail = Mail()
+cache = Cache()
+
+def make_celery(app):
+    celery = Celery(
+        app.import_name,
+        broker=app.config['CELERY_BROKER_URL'],
+        backend=app.config['CELERY_RESULT_BACKEND']
+    )
+    celery.conf.update(app.config)
+
+    class ContextTask(celery.Task):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery.Task = ContextTask
+    return celery
 
 def create_app(config_class='config.Config'):
     """
@@ -22,9 +42,13 @@ def create_app(config_class='config.Config'):
     # Bind extensions to the current app instance
     db.init_app(app)
     jwt.init_app(app)
+    mail.init_app(app)
+    cache.init_app(app)
+    
+    celery = make_celery(app)
+    app.celery = celery
     
     # Import and register the authentication blueprint
-    # Handled inside the factory to keep imports clean and scoped
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     
@@ -47,11 +71,7 @@ def create_app(config_class='config.Config'):
     
     # Ensure database models are registered and create tables
     with app.app_context():
-        # Importing models runs the model initialization file, which registers
-        # all 6 models to the db.Model metadata.
         from app import models
-        
-        # Creates all database tables inside SQLite if they do not exist yet.
         db.create_all()
         
     return app
