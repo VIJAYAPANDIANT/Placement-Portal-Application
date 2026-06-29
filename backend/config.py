@@ -1,3 +1,5 @@
+import os
+
 class Config:
     # Specifies the database URL. Here we use SQLite, and 'app.db' will be created in the application's root directory.
     SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
@@ -11,8 +13,8 @@ class Config:
     JWT_SECRET_KEY = 'super-secret-key-change-in-production'
 
     # Redis config (broker and result backend)
-    CELERY_BROKER_URL = 'redis://localhost:6379/0'
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 
     # Flask-Mail config (use Gmail SMTP for simplicity)
     MAIL_SERVER = 'smtp.gmail.com'
@@ -23,6 +25,7 @@ class Config:
     MAIL_DEFAULT_SENDER = 'your-email@gmail.com'
 
     # Flask-Caching config
-    CACHE_TYPE = 'RedisCache'
-    CACHE_REDIS_URL = 'redis://localhost:6379/0'
+    CACHE_TYPE = os.environ.get('CACHE_TYPE', 'SimpleCache')
+    CACHE_REDIS_URL = os.environ.get('CACHE_REDIS_URL', 'redis://localhost:6379/0')
     CACHE_DEFAULT_TIMEOUT = 300
+
