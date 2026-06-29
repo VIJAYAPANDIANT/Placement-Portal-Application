@@ -1,8 +1,8 @@
 import os
 
 class Config:
-    # Specifies the database URL. Here we use SQLite, and 'app.db' will be created in the application's root directory.
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
+    # Specifies the database URL. Here we use SQLite, and 'app.db' will be created in /tmp to support Vercel.
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:////tmp/app.db')
     
     # Disables Flask-SQLAlchemy's event system, which tracks modifications of objects. 
     # Setting it to False avoids overhead and improves performance, as we don't need this custom tracking.
