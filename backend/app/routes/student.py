@@ -259,9 +259,9 @@ def upload_resume():
     if not file.filename.lower().endswith('.pdf'):
         return jsonify({"error": "Only PDF files allowed"}), 400
 
-    # Save to backend/uploads/resumes/<student_id>.pdf
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    upload_folder = os.path.join(base_dir, 'uploads', 'resumes')
+    # Save to tempdir/uploads/resumes/<student_id>.pdf
+    import tempfile
+    upload_folder = os.path.join(tempfile.gettempdir(), 'uploads', 'resumes')
     os.makedirs(upload_folder, exist_ok=True)
 
     filename = f"{student_id}.pdf"

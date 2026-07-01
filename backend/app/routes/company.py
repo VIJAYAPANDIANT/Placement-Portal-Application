@@ -262,8 +262,8 @@ def get_student_resume_for_company(student_id):
     if not student or not student.resume_url:
         return jsonify({"error": "No resume uploaded"}), 404
 
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    file_path = os.path.join(base_dir, student.resume_url.replace('/', os.sep))
+    import tempfile
+    file_path = os.path.join(tempfile.gettempdir(), student.resume_url.replace('/', os.sep))
 
     if not os.path.exists(file_path):
         return jsonify({"error": "Resume file not found on server"}), 404

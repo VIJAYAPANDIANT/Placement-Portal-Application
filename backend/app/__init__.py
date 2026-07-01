@@ -71,8 +71,8 @@ def create_app(config_class='config.Config'):
 
     @app.route('/uploads/<path:filename>')
     def serve_upload(filename):
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        upload_folder = os.path.join(base_dir, 'uploads')
+        import tempfile
+        upload_folder = os.path.join(tempfile.gettempdir(), 'uploads')
         return send_from_directory(upload_folder, filename)
     
     with app.app_context():

@@ -421,7 +421,10 @@ const StudentProfile = () => {
                     <button 
                       className="btn btn-sm btn-outline-primary fw-bold px-3"
                       style={{ borderRadius: '6px', fontSize: '12px' }}
-                      onClick={() => window.open(`http://localhost:5000/${profile.resume_url}`, '_blank')}
+                      onClick={() => {
+                        const baseUrl = api.defaults.baseURL.replace(/\/api$/, '');
+                        window.open(`${baseUrl}/${profile.resume_url}`, '_blank');
+                      }}
                     >
                       👁️ Preview
                     </button>
